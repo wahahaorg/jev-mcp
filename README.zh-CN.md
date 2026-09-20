@@ -22,7 +22,7 @@
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/)
 - 可被 `browser-harness` 使用的 Chrome/Chromium
-- 用于 Jev 决策的 `TYPESAFE_API_KEY`
+- 用于 Jev 决策的 `OPENROUTER_API_KEY`（推荐），或直连 TypeSafe 的 `TYPESAFE_API_KEY`
 - 用于填写搜索词或筛选条件的 `TEXT_MODEL_API_KEY`；示例默认使用 OpenRouter
 
 ## 安装
@@ -31,7 +31,7 @@
 git clone https://github.com/wahahaorg/jev-mcp.git
 cd jev-mcp
 cp .env.example .env
-# 在 .env 写入真实密钥；不要提交此文件。
+# 在 .env 写入真实密钥；不要提交此文件。默认走 OpenRouter Decisions。
 uv sync
 uv run browser-harness --doctor
 ```
@@ -73,7 +73,7 @@ uv run --env-file .env jev-mcp
 4. 结果列表或详情页可见后，调用 `jev_extract_products`。
 5. 完成后调用 `jev_stop`。
 
-单次 `jev_browse` 最多执行 30 个浏览器动作；上游 Jev 整次运行最多 60 步。输出是页面观察结果，不代表库存、可售状态或结算价格已被确认。
+存在 `OPENROUTER_API_KEY` 时，服务会通过 OpenRouter 的 alpha Decisions endpoint 调用 `~typesafe/jev-latest`；否则保留上游直连 TypeSafe 的兼容路径。单次 `jev_browse` 最多执行 30 个浏览器动作；上游 Jev 整次运行最多 60 步。输出是页面观察结果，不代表库存、可售状态或结算价格已被确认。
 
 ## 安全模型
 

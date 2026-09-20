@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from jev_mcp import decisions
 from jev_mcp.service import JevService
 
 
@@ -114,3 +115,47 @@ def test_stop_removes_the_session() -> None:
 
     assert service.stop(session_id)["status"] == "stopped"
     assert service.status(session_id)["ok"] is False
+
+
+def test_openrouter_adapter_keeps_jev_operation_and_target_protocol(monkeypatch) -> None:
+    class Response:
+        status_code = 200
+        is_error = False
+
+        @staticmethod
+        def json() -> dict[str, Any]:
+            return {
+                "model": "typesafe/jev-test",
+                "usage": {"input_tokens": 12},
+                "answers": {
+                    "operation": {
+                        "choice": "CLICK",
+                        "probabilities": {"CLICK": 1.0, "DONE": 0.0, "BLOCKED": 0.0},
+                        "confidence": 1.0,
+                    },
+                    "click_target": {"choice": "1", "probabilities": {"1": 1.0}, "confidence": 1.0},
+                },
+            }
+
+    class Client:
+        def post(self, url: str, *, json: dict[str, Any], headers: dict[str, str]) -> Response:
+            assert url == "https://decisions.example"
+            assert json["model"] == "~typesafe/jev-latest"
+            assert headers["Authorization"] == "Bearer test-key"
+            return Response()
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    monkeypatch.setenv("JEV_DECISIONS_BASE_URL", "https://decisions.example")
+    monkeypatch.setattr(decisions, "_client", Client())
+    state = {
+        "url": "https://shop.example",
+        "title": "Shop",
+        "text": "Headphones",
+        "actions": [{"id": "e1", "node": 1, "kind": "click", "role": "link", "label": "Headphones", "value": ""}],
+    }
+
+    result = decisions.choose_with_openrouter(state, "Open the headphones", [])
+
+    assert result["choice"] == "e1"
+    assert result["operation"] == "CLICK"
+    assert result["target"] == "1"

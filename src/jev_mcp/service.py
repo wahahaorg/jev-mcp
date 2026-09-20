@@ -10,6 +10,7 @@ from typing import Any
 
 from jev_ultrafast import Agent
 
+from .decisions import install_openrouter_adapter
 from .extract import extract_visible_products
 from .safety import SensitiveActionBlocked, ensure_safe_action, ensure_safe_goal
 
@@ -32,6 +33,7 @@ class JevService:
     """Owns browser-agent sessions and exposes only compact, model-useful results."""
 
     def __init__(self, agent_factory: Callable[[str, str], Any] = Agent) -> None:
+        self.using_openrouter_decisions = install_openrouter_adapter()
         self._agent_factory = agent_factory
         self._sessions: dict[str, Session] = {}
 

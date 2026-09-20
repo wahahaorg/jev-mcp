@@ -22,7 +22,7 @@ The upstream Jev agent remains an isolated Git dependency pinned to commit `1231
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/)
 - A Chrome/Chromium installation supported by `browser-harness`
-- `TYPESAFE_API_KEY` for Jev decisions
+- An `OPENROUTER_API_KEY` for Jev Decisions (recommended), or a direct `TYPESAFE_API_KEY`
 - `TEXT_MODEL_API_KEY` for search/filter text entry; the default example uses OpenRouter
 
 ## Setup
@@ -31,7 +31,7 @@ The upstream Jev agent remains an isolated Git dependency pinned to commit `1231
 git clone https://github.com/wahahaorg/jev-mcp.git
 cd jev-mcp
 cp .env.example .env
-# Put real keys in .env; never commit it.
+# Put real keys in .env; never commit it. OpenRouter Decisions is the default path.
 uv sync
 uv run browser-harness --doctor
 ```
@@ -73,7 +73,7 @@ Keep credentials in the host environment or `.env`; never place keys in the conf
 4. Call `jev_extract_products` on a visible result/detail page.
 5. Call `jev_stop` when finished.
 
-The agent is deliberately bounded to 30 browser actions per `jev_browse` call and upstream Jev itself has a 60-action run cap. Results are observations, not proof of stock, availability, or final checkout price.
+When `OPENROUTER_API_KEY` is present, the wrapper sends Jev decisions to OpenRouter's alpha Decisions endpoint using `~typesafe/jev-latest`; otherwise it retains the upstream direct TypeSafe client. The agent is deliberately bounded to 30 browser actions per `jev_browse` call and upstream Jev itself has a 60-action run cap. Results are observations, not proof of stock, availability, or final checkout price.
 
 ## Safety model
 
