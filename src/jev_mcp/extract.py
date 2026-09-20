@@ -12,6 +12,7 @@ PRODUCTS_SCRIPT = r"""
   const clean = value => (value || '').replace(/\s+/g, ' ').trim();
   const price = /(?:[¥￥$€£]\s?\d[\d,.]*|\d[\d,.]*\s?(?:元|USD|CNY|EUR|GBP))/i;
   const rating = /(?:\b[0-5](?:\.\d)?\s*(?:\/\s*5|out of 5|星)|评分\s*[0-5](?:\.\d)?)/i;
+  const priceFilter = /^(?:under|over)\s*[$€£¥￥]?\s*\d|^[$€£¥￥]?\s*\d[\d,.]*\s*(?:to|-|–)\s*[$€£¥￥]?\s*\d/i;
   const visited = new Set();
   const products = [];
   for (const link of document.querySelectorAll('a[href]')) {
@@ -26,7 +27,8 @@ PRODUCTS_SCRIPT = r"""
       card = candidate;
     }
     const text = clean(card.innerText);
-    if (!price.test(text) || text.length > 1800) continue;
+    if (!price.test(text) || text.length < 40 || text.length > 1800 || priceFilter.test(name)) continue;
+    if (/^shop on ebay$/i.test(name)) continue;
     visited.add(link);
     const priceMatch = text.match(price);
     const ratingMatch = text.match(rating);
