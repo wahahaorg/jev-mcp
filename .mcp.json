@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "jev-browser": {
+      "command": "uv",
+      "args": ["run", "--env-file", ".env", "jev-mcp"]
+    }
+  }
+}

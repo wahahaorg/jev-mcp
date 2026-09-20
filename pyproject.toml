@@ -1,0 +1,34 @@
+[project]
+name = "jev-mcp"
+version = "0.1.0"
+description = "A safe, session-aware MCP wrapper for the Jev Ultrafast browser agent"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "wahahaorg" }]
+dependencies = [
+  "jev-ultrafast",
+  "mcp>=1.11,<2",
+]
+
+[project.scripts]
+jev-mcp = "jev_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+jev-ultrafast = { git = "https://github.com/browser-use/jev-ultrafast.git", rev = "1231850a0bf1a0c0341fe408ef1668dbbfdfac46" }
+
+[dependency-groups]
+dev = ["pytest>=8.4,<9", "ruff>=0.14,<1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
