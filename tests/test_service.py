@@ -86,8 +86,8 @@ def test_browse_rejects_transactional_goal_before_opening_browser() -> None:
     assert "browsing-only" in result["error"]
 
 
-def test_observed_checkout_button_is_blocked_before_clicking() -> None:
-    action = {"id": "e1", "kind": "click", "label": "Checkout"}
+def test_observed_purchase_button_is_blocked_before_clicking() -> None:
+    action = {"id": "e1", "kind": "click", "label": "Add to cart"}
     service = JevService(lambda url, goal: FakeAgent(url, goal, action=action))
 
     result = service.browse("https://shop.example", "Find wireless headphones", max_steps=1)

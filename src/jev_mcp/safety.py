@@ -19,9 +19,10 @@ GOAL_BLOCKLIST = re.compile(
     re.IGNORECASE,
 )
 ACTION_BLOCKLIST = re.compile(
-    r"\b(?:buy now|checkout|place order|submit order|pay(?:ment)?|confirm (?:and )?pay|"
-    r"complete purchase|upload|password|cvv|card number|verification code)\b|"
-    r"(?:立即购买|购买|下单|提交订单|付款|支付|结算|确认支付|上传|密码|验证码|银行卡)",
+    r"\b(?:buy(?: now)?|purchase|add to (?:cart|bag)|checkout|place order|submit order|"
+    r"pay(?:ment)?|confirm (?:and )?pay|complete purchase|upload|password|cvv|card number|"
+    r"verification code)\b|(?:立即购买|购买|加入购物车|购物车|下单|提交订单|付款|支付|结算|"
+    r"确认支付|上传|密码|验证码|银行卡)",
     re.IGNORECASE,
 )
 SENSITIVE_FIELD_BLOCKLIST = re.compile(

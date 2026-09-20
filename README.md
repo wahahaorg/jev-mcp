@@ -77,7 +77,7 @@ The agent is deliberately bounded to 30 browser actions per `jev_browse` call an
 
 ## Safety model
 
-The wrapper rejects transactional goals before a browser opens and blocks observed purchase, checkout, payment, upload, credential, card, and verification-code controls just before execution. It also refuses password/file controls inherited from upstream's DOM snapshot safeguards. This is a browsing and extraction integration, not a purchasing bot.
+The wrapper rejects transactional goals before a browser opens and blocks observed add-to-cart, purchase, checkout, payment, upload, credential, card, and verification-code controls just before execution. It also refuses password/file controls inherited from upstream's DOM snapshot safeguards. This is a browsing and extraction integration, not a purchasing bot.
 
 Web content is treated as untrusted data. Product extraction is best-effort and returns only currently visible cards; validate important prices, variants, and shipping details on the source page.
 
