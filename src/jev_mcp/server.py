@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from mcp.server.fastmcp import FastMCP
 
+from .decisions import relay_decide
 from .service import JevService
 
 service = JevService()
@@ -13,7 +14,10 @@ mcp = FastMCP(
         "Use this server for read-only product research: search, filter, inspect results, "
         "and extract visible product data. "
         "It never logs in, uploads, submits orders, or makes payments. Start with jev_browse, retain its session_id, "
-        "then use jev_status or jev_extract_products; always finish with jev_stop."
+        "then use jev_status or jev_extract_products; always finish with jev_stop. "
+        "If you only want Jev as an intermediate decision relay — your own browser tooling (e.g. opencli) drives "
+        "the page and Jev only judges which element to act on — use jev_decide ONLY; it never opens a browser, "
+        "session, or tab."
     ),
 )
 
@@ -57,6 +61,32 @@ def jev_extract_products(session_id: str) -> dict:
     it does not scroll, click, or infer fields that are not visible, so verify important price or stock data.
     """
     return service.extract_products(session_id)
+
+
+@mcp.tool()
+def jev_decide(
+    goal: str,
+    elements: list[dict],
+    page_url: str = "",
+    page_title: str = "",
+    page_text: str = "",
+    operations: list[str] | None = None,
+) -> dict:
+    """Pure decision relay: Jev judges which operation and target element to choose next, no browser involved.
+
+    Use this tool ONLY when you want Jev as an intermediate judgment relay: your own browser tooling
+    (e.g. opencli, computer-use) drives the page and captures its state; pass the observed elements here and
+    Jev returns the next operation (CLICK/TYPE_TEXT/SELECT/DONE/BLOCKED) and target element index.
+    Unlike jev_browse, this never opens a browser, session, or tab — no new pages are created.
+    `elements` is a list of observed elements, e.g. [{"index": "12", "role": "button", "label": "搜索"}, ...];
+    `operations` optionally restricts the choices (default: CLICK, TYPE_TEXT, SELECT).
+    """
+    try:
+        return relay_decide(goal, elements, page_url, page_title, page_text, operations)
+    except RuntimeError as exc:
+        return {"ok": False, "error": str(exc)}
+    except Exception as exc:  # Keep the relay read-only even when the endpoint misbehaves.
+        return {"ok": False, "error": f"Relay decision failed: {exc}"}
 
 
 def main() -> None:

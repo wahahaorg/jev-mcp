@@ -6,7 +6,7 @@
 
 ## What it is (and is not)
 
-This is one local stdio MCP server, not a replacement browser extension and not four separate MCPs. It owns browser targets created by Jev and exposes four model-facing tools:
+This is one local stdio MCP server, not a replacement browser extension and not four separate MCPs. It owns browser targets created by Jev and exposes five model-facing tools:
 
 | Tool | Use it for | Does not do |
 | --- | --- | --- |
@@ -14,6 +14,11 @@ This is one local stdio MCP server, not a replacement browser extension and not 
 | `jev_status` | Read a session's URL, visible text, supported controls, and latest actions | Take another browser action |
 | `jev_extract_products` | Read visible product card fields: name, price, rating, details, URL | Scroll, click, or guarantee site-specific parsing |
 | `jev_stop` | Close the Jev-owned Chrome target | Affect ordinary user Chrome tabs |
+| `jev_decide` | Relay mode: judge host-supplied page state and return the next operation + target element, no browser | Open a browser, session, or tab; take any page action |
+
+**Relay mode**: if you only want Jev as an intermediate decision relay — your own browser tooling (e.g. opencli,
+computer-use) drives the page and you pass the observed elements in — use `jev_decide` ONLY. It never opens a
+browser, session, or tab, so no new pages are created.
 
 The upstream Jev agent remains an isolated Git dependency pinned to commit `1231850a0bf1a0c0341fe408ef1668dbbfdfac46`; this repository contains the MCP session layer, output shaping, product extraction, and safety guardrails. This keeps upgrades reviewable and avoids carrying a modified upstream fork.
 

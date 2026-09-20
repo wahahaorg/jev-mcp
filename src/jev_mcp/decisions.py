@@ -11,6 +11,8 @@ from jev_ultrafast import agent as upstream_agent
 from jev_ultrafast import model as upstream_model
 
 OPENROUTER_DECISIONS_URL = "https://openrouter.ai/api/alpha/decisions"
+MAX_RELAY_ELEMENTS = 80
+MAX_RELAY_TEXT_CHARS = 6_000
 _client = httpx.Client(http2=True, timeout=25)
 
 
@@ -122,6 +124,83 @@ def _api_key() -> str:
     if not key:
         raise RuntimeError("OPENROUTER_API_KEY or JEV_DECISIONS_API_KEY is required for OpenRouter Decisions.")
     return key
+
+
+RELAY_OPERATIONS = {
+    "CLICK": "Click an element, button, menu option, autocomplete suggestion, or calendar day.",
+    "TYPE_TEXT": "Enter or replace text in an editable field. A small LLM will supply the value from the goal.",
+    "SELECT": "Select an observed dropdown value.",
+}
+
+
+def relay_decide(
+    goal: str,
+    elements: list[dict[str, Any]],
+    page_url: str = "",
+    page_title: str = "",
+    page_text: str = "",
+    operations: list[str] | None = None,
+) -> dict[str, Any]:
+    """Pure decision relay: judge host-supplied page state without touching a browser.
+
+    The host (e.g. opencli or any other browser tool) drives the page itself and passes the
+    observed elements here; Jev only answers which operation and target element to choose next.
+    """
+    chosen = [op for op in (operations or list(RELAY_OPERATIONS)) if op in RELAY_OPERATIONS]
+    if not chosen:
+        raise RuntimeError("operations must be a non-empty subset of CLICK, TYPE_TEXT, SELECT.")
+    if not elements:
+        raise RuntimeError("elements is empty; pass at least one observed element from the host browser state.")
+
+    targets: dict[str, dict[int, dict[str, Any]]] = {}
+    for operation in chosen:
+        candidates = {
+            element["index"]: {
+                "element": f"[{element['index']}] {element.get('label', '')}".strip(),
+                **{key: element[key] for key in ("role", "value", "current_value", "checked", "selected", "expanded") if key in element},
+            }
+            for element in elements
+            if isinstance(element, dict) and "index" in element
+        }
+        if candidates:
+            targets[operation] = candidates
+
+    operations_map = {name: RELAY_OPERATIONS[name] for name in chosen if name in targets}
+    operations_map.update(DONE="Every requirement is visibly satisfied.", BLOCKED="No supported operation can progress.")
+
+    questions: dict[str, Any] = {
+        "operation": {
+            "type": "choice",
+            "criteria": operations_map,
+            "instructions": {"goal": goal, "rules": "Prefer the least destructive supported action; never choose transactional or credential actions."},
+        }
+    }
+    for operation, candidates in targets.items():
+        questions[operation.lower() + "_target"] = {
+            "type": "choice",
+            "criteria": candidates,
+            "instructions": {"goal": goal, "operation": operation},
+        }
+
+    body = {
+        "model": os.environ.get("JEV_DECISIONS_MODEL", "~typesafe/jev-latest"),
+        "state": {
+            "page": {"url": page_url, "title": page_title, "text": page_text[:MAX_RELAY_TEXT_CHARS]},
+            "elements": elements[:MAX_RELAY_ELEMENTS],
+            "recent_actions": [],
+        },
+        "questions": questions,
+    }
+    started_at = time.perf_counter()
+    result = _post_decision(body)
+    return {
+        "ok": True,
+        "mode": "relay",
+        "model": result.get("model", body["model"]),
+        "answers": result.get("answers", {}),
+        "usage": result.get("usage", {}),
+        "latency_ms": round((time.perf_counter() - started_at) * 1000),
+    }
 
 
 def _post_decision(body: dict[str, Any]) -> dict[str, Any]:
